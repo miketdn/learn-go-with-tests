@@ -1,4 +1,4 @@
-package main
+package poker
 
 import (
 	"encoding/json"
@@ -11,25 +11,6 @@ import (
 )
 
 const jsonContentType = "application/json"
-
-type StubPlayerStore struct {
-	scores   map[string]int
-	winCalls []string
-	league   League
-}
-
-func (s *StubPlayerStore) GetPlayerScore(name string) int {
-	score := s.scores[name]
-	return score
-}
-
-func (s *StubPlayerStore) RecordWin(name string) {
-	s.winCalls = append(s.winCalls, name)
-}
-
-func (s *StubPlayerStore) GetLeague() League {
-	return s.league
-}
 
 func TestGETPlayers(t *testing.T) {
 	store := StubPlayerStore{
@@ -89,14 +70,7 @@ func TestScoreWins(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusAccepted)
-
-		if len(store.winCalls) != 1 {
-			t.Fatalf("did not get correct calls to RecordWin, got %d wanted %d", len(store.winCalls), 1)
-		}
-
-		if store.winCalls[0] != player {
-			t.Errorf("did not store correct winner, got %q wanted %q", store.winCalls[0], player)
-		}
+		assertPlayerWin(t, &store, player)
 	})
 }
 
@@ -183,5 +157,17 @@ func assertNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
 		t.Fatalf("didn't expect an error but got one, %v", err)
+	}
+}
+
+func assertPlayerWin(t *testing.T, store *StubPlayerStore, winner string) {
+	t.Helper()
+
+	if len(store.WinCalls) != 1 {
+		t.Fatalf("did not get correct calls to RecordWin, got %d wanted %d", len(store.WinCalls), 1)
+	}
+
+	if store.WinCalls[0] != winner {
+		t.Errorf("did not store correct winner, got %q wanted %q", store.WinCalls[0], winner)
 	}
 }
